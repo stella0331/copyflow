@@ -143,6 +143,119 @@
 
     .btn-logout:hover { border-color: var(--text); color: var(--text); }
 
+    /* ── TABS ── */
+    .tab-nav {
+      display: flex; gap: 4px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tab-btn {
+      background: transparent; border: none;
+      font-family: var(--sans); font-size: 19px; font-weight: 500;
+      color: var(--text-muted); padding: 12px 18px;
+      cursor: pointer; position: relative;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s;
+    }
+
+    .tab-btn:hover { color: var(--text); }
+
+    .tab-btn.active {
+      color: var(--text);
+      border-bottom-color: var(--text);
+      font-weight: 700;
+    }
+
+    .tab-badge {
+      display: inline-block;
+      font-size: 14px; font-weight: 600;
+      color: var(--text-dim);
+      background: var(--surface2);
+      border-radius: 20px;
+      padding: 1px 8px;
+      margin-left: 6px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── HISTORY ── */
+    .history-empty {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text-dim);
+    }
+
+    .history-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .history-item:hover { border-color: var(--border2); }
+
+    .history-item-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .history-item-title {
+      font-size: 19px; font-weight: 700;
+      color: var(--text);
+    }
+
+    .history-item-meta {
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .history-item-date {
+      font-size: 15px; color: var(--text-dim);
+    }
+
+    .history-item-tags {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+
+    .history-item-preview {
+      font-size: 17px; color: var(--text-muted);
+      line-height: 1.6;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .history-item-delete {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-dim); font-size: 15px;
+      padding: 4px 10px; border-radius: 4px;
+      cursor: pointer; transition: all 0.15s;
+    }
+
+    .history-item-delete:hover { border-color: var(--accent3); color: var(--accent3); }
+
+    .history-toolbar {
+      display: flex; justify-content: flex-end;
+      margin-bottom: 16px;
+    }
+
+    .btn-clear-history {
+      background: var(--surface); border: 1.5px solid var(--border);
+      color: var(--text-muted); font-family: var(--sans);
+      font-size: 17px; font-weight: 500; padding: 7px 14px;
+      border-radius: 6px; cursor: pointer; transition: all 0.15s;
+    }
+
+    .btn-clear-history:hover { border-color: var(--accent3); color: var(--accent3); }
+
     /* ── HEADER ── */
     header {
       background: var(--surface);
@@ -737,6 +850,15 @@
     <h1 class="page-title">상세 카피플로우(CopyFlow)</h1>
     <p class="page-sub">제품 이미지 또는 정보를 입력하면 SEO 설명 · ATF 카피 · 후킹 문구 · 슬로건을 자동으로 생성합니다.</p>
 
+    <!-- TAB NAV -->
+    <div class="tab-nav">
+      <button class="tab-btn active" id="tab-btn-generate" onclick="switchTab('generate')">생성</button>
+      <button class="tab-btn" id="tab-btn-history" onclick="switchTab('history')">히스토리<span class="tab-badge" id="history-count">0</span></button>
+    </div>
+
+    <!-- GENERATE TAB -->
+    <div class="tab-panel active" id="tab-generate">
+
     <!-- ① AI 모델 -->
     <div class="card">
       <div class="card-title"><span class="card-title-num">01</span>AI 모델</div>
@@ -976,6 +1098,21 @@
       </div>
 
     </section>
+
+    </div> <!-- /#tab-generate -->
+
+    <!-- HISTORY TAB -->
+    <div class="tab-panel" id="tab-history">
+      <div class="history-toolbar">
+        <button class="btn-clear-history" onclick="clearHistory()">전체 삭제</button>
+      </div>
+      <div id="history-list"></div>
+      <div class="history-empty" id="history-empty">
+        <div style="font-size: 36px; margin-bottom: 12px;">🗂️</div>
+        아직 생성된 카피가 없어요.<br>생성 탭에서 카피를 만들면 여기에 자동으로 기록됩니다.
+      </div>
+    </div>
+
   </div>
 
   <!-- FOOTER -->
@@ -1065,6 +1202,14 @@
     let selectedModel = 'claude';
     let fullResultText = '';
     let uploadedImages = [];
+
+    // 히스토리 카운트 초기화
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof updateHistoryCount === 'function') updateHistoryCount();
+    });
+    window.addEventListener('load', () => {
+      if (typeof updateHistoryCount === 'function') updateHistoryCount();
+    });
 
     function selectSeason(btn) {
       document.querySelectorAll('.season-btn').forEach(b => b.classList.remove('active'));
@@ -1339,7 +1484,7 @@ JSON만 출력.`;
       }
     }
 
-    function renderResult(productName, r) {
+    function renderResult(productName, r, skipHistorySave) {
       document.getElementById('tag-product').textContent = productName;
       document.getElementById('tag-season').textContent = selectedSeason;
       const modelTag = document.getElementById('tag-model');
@@ -1394,6 +1539,116 @@ JSON만 출력.`;
 
       document.getElementById('result-section').classList.add('visible');
       document.getElementById('result-section').scrollIntoView({ behavior:'smooth', block:'start' });
+
+      if (!skipHistorySave) saveToHistory(productName, r);
+    }
+
+    /* ── TAB SWITCHING ── */
+    function switchTab(tab) {
+      document.getElementById('tab-btn-generate').classList.toggle('active', tab === 'generate');
+      document.getElementById('tab-btn-history').classList.toggle('active', tab === 'history');
+      document.getElementById('tab-generate').classList.toggle('active', tab === 'generate');
+      document.getElementById('tab-history').classList.toggle('active', tab === 'history');
+      if (tab === 'history') renderHistory();
+    }
+
+    /* ── HISTORY (localStorage) ── */
+    const HISTORY_KEY = 'copyflow_history';
+    const HISTORY_MAX = 30;
+
+    function getHistory() {
+      try {
+        return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+      } catch(e) { return []; }
+    }
+
+    function saveToHistory(productName, result) {
+      const history = getHistory();
+      const entry = {
+        id: Date.now(),
+        productName,
+        season: selectedSeason,
+        model: selectedModel,
+        timestamp: new Date().toISOString(),
+        result
+      };
+      history.unshift(entry);
+      if (history.length > HISTORY_MAX) history.length = HISTORY_MAX;
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      updateHistoryCount();
+    }
+
+    function updateHistoryCount() {
+      document.getElementById('history-count').textContent = getHistory().length;
+    }
+
+    function formatHistoryDate(iso) {
+      const d = new Date(iso);
+      const now = new Date();
+      const sameDay = d.toDateString() === now.toDateString();
+      const pad = n => String(n).padStart(2,'0');
+      if (sameDay) return `오늘 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      return `${d.getMonth()+1}월 ${d.getDate()}일 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function renderHistory() {
+      const history = getHistory();
+      const listEl = document.getElementById('history-list');
+      const emptyEl = document.getElementById('history-empty');
+
+      if (history.length === 0) {
+        listEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+      }
+      emptyEl.style.display = 'none';
+
+      listEl.innerHTML = history.map(entry => {
+        const seoText = entry.result?.seo?.text || '';
+        const modelLabel = entry.model === 'gemini' ? '◈ Gemini' : '✦ Claude';
+        const modelClass = entry.model === 'gemini' ? 'model-gemini' : 'model-claude';
+        return `
+        <div class="history-item" onclick="loadHistoryItem(${entry.id})">
+          <div class="history-item-head">
+            <span class="history-item-title">${entry.productName}</span>
+            <div class="history-item-meta">
+              <span class="history-item-date">${formatHistoryDate(entry.timestamp)}</span>
+              <button class="history-item-delete" onclick="event.stopPropagation(); deleteHistoryItem(${entry.id})">삭제</button>
+            </div>
+          </div>
+          <div class="history-item-tags" style="margin-bottom:8px;">
+            <span class="result-tag season">${entry.season}</span>
+            <span class="result-tag ${modelClass}">${modelLabel}</span>
+          </div>
+          <div class="history-item-preview">${seoText}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function loadHistoryItem(id) {
+      const history = getHistory();
+      const entry = history.find(h => h.id === id);
+      if (!entry) return;
+
+      selectedSeason = entry.season;
+      selectedModel = entry.model;
+
+      switchTab('generate');
+      renderResult(entry.productName, entry.result, true);
+    }
+
+    function deleteHistoryItem(id) {
+      const history = getHistory().filter(h => h.id !== id);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      updateHistoryCount();
+      renderHistory();
+    }
+
+    function clearHistory() {
+      if (!confirm('히스토리를 전체 삭제할까요? 이 작업은 되돌릴 수 없습니다.')) return;
+      localStorage.removeItem(HISTORY_KEY);
+      updateHistoryCount();
+      renderHistory();
     }
 
     function copyBlock(id) {
