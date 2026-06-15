@@ -1093,6 +1093,22 @@
         </div>
       </div>
 
+      <!-- 06. SHORT DESCRIPTION -->
+      <div class="result-block">
+        <div class="block-head">
+          <div class="block-meta">
+            <span class="block-num">06</span>
+            <span class="block-title">상품 간략설명</span>
+          </div>
+          <button class="btn-copy" onclick="copyBlock('short-desc-content')">복사</button>
+        </div>
+        <div class="block-body">
+          <div id="short-desc-content" style="font-size: 19px;line-height:1.9;color:var(--text);white-space:pre-wrap;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:16px;"></div>
+          <div class="char-count" id="short-desc-char-count">0자</div>
+          <div class="block-intent" id="short-desc-intent">검색 결과·상품 목록에 노출되는 요약 설명이에요. 상세 설명을 한 줄로 압축한 핵심 메시지입니다.</div>
+        </div>
+      </div>
+
       <div style="margin-top:20px;text-align:center;">
         <button class="btn-reset" onclick="scrollToTop()">← 다시 입력하기</button>
       </div>
@@ -1268,7 +1284,7 @@
       return new Promise(resolve => {
         const img = new Image();
         img.onload = () => {
-          const MAX = 1024;
+          const MAX = 768;
           let w = img.width, h = img.height;
           if (w > MAX || h > MAX) {
             if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
@@ -1278,7 +1294,7 @@
           canvas.width = w; canvas.height = h;
           canvas.getContext('2d').drawImage(img, 0, 0, w, h);
           const mimeType = 'image/jpeg';
-          const dataUrl = canvas.toDataURL(mimeType, 0.75);
+          const dataUrl = canvas.toDataURL(mimeType, 0.6);
           resolve({ dataUrl, mimeType });
         };
         img.src = dataUrl;
@@ -1326,14 +1342,14 @@
           headers:{ 'Content-Type':'application/json' },
           body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:400, messages:[{role:'user',content:parts}] })
         });
-        const d = await res.json();
+        const d = await safeJson(res);
         if (d.error) throw new Error(d.error.message);
         result = d.content?.map(i=>i.text||'').join('').trim();
       } else {
         const key = document.getElementById('gemini-api-key').value.trim();
         const imageParts = uploadedImages.map(img => ({ inline_data:{ mime_type:img.mimeType, data:img.dataUrl.split(',')[1] } }));
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{parts:[...imageParts,{text:prompt}]}], generationConfig:{temperature:0.3,maxOutputTokens:400} }) });
-        const d = await res.json();
+        const d = await safeJson(res);
         if (d.error) throw new Error(d.error.message);
         result = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
       }
@@ -1342,6 +1358,19 @@
       document.getElementById('product-concept').value = result;
       document.getElementById('analysis-text').textContent = result;
       document.getElementById('analysis-banner').classList.add('visible');
+    }
+
+    /* ── 안전한 응답 파싱 (HTML 오류 페이지 등 비-JSON 응답 대응) ── */
+    async function safeJson(res) {
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        if (text.trim().toLowerCase().startsWith('<')) {
+          throw new Error(`서버 오류 응답을 받았어요 (HTTP ${res.status}). 이미지 용량이 너무 크거나 잠시 후 다시 시도해주세요.`);
+        }
+        throw new Error(`응답을 처리할 수 없습니다 (HTTP ${res.status}): ${text.slice(0,100)}`);
+      }
     }
 
     function showError(msg) {
@@ -1388,7 +1417,8 @@
     "material": "■ 소재 디테일(Material) — 딱딱한 스펙 정보를 카피라이터 시선으로 재해석. 아이가 입었을 때 느낄 촉감(예: '하루 종일 뛰어놀아도 자극 없는 촉촉한 코튼')과 세탁·관리하는 부모의 편리함을 강조. ~해요체 사용.",
     "tpo": "■ 착용 상황(TPO) — '이 옷은 이럴 때 입히면 주인공이 돼요!'를 보여주는 영역. 일상(등원룩/등교룩)과 특별한 날(주말 나들이·생일파티·사진 촬영 등) 2가지 상황을 구체적인 장면으로 묘사. ~해요체 사용.",
     "styling": "■ 코디 팁(Styling) — 신발·모자·가방·헤어액세서리 등과의 센스 있는 매치 제안. '이렇게 입히면 오늘 패셔니스타 완성!' 느낌으로 톡톡 튀게 마무리. ~해요체 사용."
-  }
+  },
+  "shortDescription": "상품 간략설명 — 검색결과·상품목록·SNS 공유 시 노출되는 요약 설명. 위 detail(제품 설명/소재/TPO/코디팁) 내용을 압축한 핵심 메시지. 60자 내외, 시즌·소재·핵심 특징이 자연스럽게 녹아든 한 문장. ~해요체."
 }
 
 [상세 설명 작성 지침]
@@ -1420,9 +1450,9 @@ JSON만 출력.`;
       const res = await fetch('/.netlify/functions/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:3000, messages:[{role:'user',content:userContent}] })
+        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:3500, messages:[{role:'user',content:userContent}] })
       });
-      const d = await res.json();
+      const d = await safeJson(res);
       if (d.error) throw new Error(d.error.message);
       return d.content?.map(i=>i.text||'').join('') || '';
     }
@@ -1430,8 +1460,8 @@ JSON만 출력.`;
     async function callGemini(prompt, key) {
       const parts = uploadedImages.map(img => ({ inline_data:{ mime_type:img.mimeType, data:img.dataUrl.split(',')[1] } }));
       parts.push({ text: prompt });
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{parts}], generationConfig:{ temperature:0.85, maxOutputTokens:3000, responseMimeType:'application/json' } }) });
-      const d = await res.json();
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{parts}], generationConfig:{ temperature:0.85, maxOutputTokens:3500, responseMimeType:'application/json' } }) });
+      const d = await safeJson(res);
       if (d.error) throw new Error(d.error.message);
       return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
     }
@@ -1535,7 +1565,12 @@ JSON만 출력.`;
       document.getElementById('detail-raw').textContent =
         `[제품 설명]\n${det.desc||''}\n\n[소재 디테일]\n${det.material||''}\n\n[착용 상황 TPO]\n${det.tpo||''}\n\n[코디 팁]\n${det.styling||''}`;
 
-      fullResultText = `[SEO 설명]\n${seoText}\n\n[ATF 카피]\n${atfText}\n\n[후킹 문구]\nA: ${r.hooks?.a?.text}\nB: ${r.hooks?.b?.text}\nC: ${r.hooks?.c?.text}\n\n[슬로건 — 감성 저격형]\n${(sl.emotional||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n')}\n\n[슬로건 — 직관·위트형]\n${(sl.witty||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n')}\n\n[제품 설명]\n${det.desc||''}\n\n[소재 디테일]\n${det.material||''}\n\n[착용 상황 TPO]\n${det.tpo||''}\n\n[코디 팁]\n${det.styling||''}`;
+      // 06. 상품 간략설명
+      const shortDesc = r.shortDescription || '—';
+      document.getElementById('short-desc-content').textContent = shortDesc;
+      document.getElementById('short-desc-char-count').textContent = `${shortDesc.length}자`;
+
+      fullResultText = `[SEO 설명]\n${seoText}\n\n[ATF 카피]\n${atfText}\n\n[후킹 문구]\nA: ${r.hooks?.a?.text}\nB: ${r.hooks?.b?.text}\nC: ${r.hooks?.c?.text}\n\n[슬로건 — 감성 저격형]\n${(sl.emotional||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n')}\n\n[슬로건 — 직관·위트형]\n${(sl.witty||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n')}\n\n[제품 설명]\n${det.desc||''}\n\n[소재 디테일]\n${det.material||''}\n\n[착용 상황 TPO]\n${det.tpo||''}\n\n[코디 팁]\n${det.styling||''}\n\n[상품 간략설명]\n${shortDesc}`;
 
       document.getElementById('result-section').classList.add('visible');
       document.getElementById('result-section').scrollIntoView({ behavior:'smooth', block:'start' });
