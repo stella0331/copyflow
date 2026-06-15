@@ -915,9 +915,9 @@
       </div>
 
       <div class="field-group">
-        <label for="product-concept">콘셉트 설명 <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size: 15px;color:var(--text-dim);">선택 — 이미지 없을 때 직접 입력</span></label>
-        <textarea id="product-concept" placeholder="예: 아이스 원단, UPF50+ 자외선 차단, 파스텔 컬러 3종, 3~8세 키즈 전용"></textarea>
-        <p class="field-hint">이미지를 업로드하면 자동으로 채워집니다.</p>
+        <label for="product-concept">제품 특징 <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size: 15px;color:var(--text-dim);">선택 — 이미지 없을 때 직접 입력</span></label>
+        <textarea id="product-concept" placeholder="예: 아이스 원단, UPF50+ 자외선 차단, 파스텔 컬러 3종, 3~8세 키즈 전용, 라운드넥 반팔, 배색 포인트 등"></textarea>
+        <p class="field-hint">소재, 컬러, 디자인 디테일, 핏 등 제품 특징을 적어주시면 상세 설명 작성에 활용됩니다. 이미지를 업로드하면 자동으로 채워집니다.</p>
       </div>
 
       <div class="field-group">
@@ -1390,7 +1390,7 @@
 
 제품 정보:
 - 제품명: ${name}
-- 콘셉트: ${concept}${imgNote}
+- 제품 특징: ${concept}${imgNote}
 - 시즌: ${selectedSeason}
 
 다음 JSON만 출력하세요. 다른 텍스트 없이:
@@ -1475,7 +1475,7 @@ JSON만 출력.`;
       const hasImages = uploadedImages.length > 0;
 
       if (!productName) { showError('제품명을 입력해주세요.'); return; }
-      if (!concept && !hasImages) { showError('이미지를 업로드하거나 콘셉트 설명을 입력해주세요.'); return; }
+      if (!concept && !hasImages) { showError('이미지를 업로드하거나 제품 특징을 입력해주세요.'); return; }
       if (selectedModel === 'gemini' && !document.getElementById('gemini-api-key').value.trim()) { showError('Gemini API Key를 입력해주세요.'); return; }
 
       const btn = document.getElementById('generate-btn');
