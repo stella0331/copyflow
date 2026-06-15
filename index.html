@@ -1105,7 +1105,7 @@
         <div class="block-body">
           <div id="short-desc-content" style="font-size: 19px;line-height:1.9;color:var(--text);white-space:pre-wrap;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:16px;"></div>
           <div class="char-count" id="short-desc-char-count">0자</div>
-          <div class="block-intent" id="short-desc-intent">검색 결과·상품 목록에 노출되는 요약 설명이에요. 상세 설명을 한 줄로 압축한 핵심 메시지입니다.</div>
+          <div class="block-intent" id="short-desc-intent">검색 결과·상품 목록에 노출되는 요약 설명이에요. 디자인 → 코디 → 소재/핏 → 착용 상황 → 카테고리 순으로 정보를 나열한 한 문장입니다.</div>
         </div>
       </div>
 
@@ -1168,7 +1168,7 @@
       errEl.classList.remove('visible');
 
       // 로그인 성공 — 세션 저장 및 화면 전환
-      sessionStorage.setItem('copyflow_user', JSON.stringify({ email, name: payload.name, picture: payload.picture }));
+      localStorage.setItem('copyflow_user', JSON.stringify({ email, name: payload.name, picture: payload.picture }));
       showApp(payload);
     }
 
@@ -1180,7 +1180,7 @@
     }
 
     function logout() {
-      sessionStorage.removeItem('copyflow_user');
+      localStorage.removeItem('copyflow_user');
       document.getElementById('login-gate').classList.remove('hidden');
       document.getElementById('app-content').classList.remove('visible');
       if (window.google?.accounts?.id) {
@@ -1190,7 +1190,7 @@
 
     window.addEventListener('load', () => {
       // 기존 세션 확인
-      const saved = sessionStorage.getItem('copyflow_user');
+      const saved = localStorage.getItem('copyflow_user');
       if (saved) {
         try {
           const payload = JSON.parse(saved);
@@ -1416,18 +1416,18 @@
     ]
   },
   "detail": {
-    "desc": "■ 제품 설명(Introduction) — 매력을 보여주는 헤드카피 한 줄로 시작. 이어서 부모가 이 옷을 사야 하는 이유를 2~3줄의 다정하고 감성적인 서사로 풀어내기. ~해요체 사용.",
+    "desc": "■ 제품 설명(Introduction) — 매력을 보여주는 헤드카피 한 줄로 시작. 이어서 3~10세 아이를 키우는 부모가 이 옷을 사야 하는 이유를 2~3줄의 다정하고 감성적인 서사로 풀어내기. ~해요체 사용.",
     "material": "■ 소재 디테일(Material) — 딱딱한 스펙 정보를 카피라이터 시선으로 재해석. 아이가 입었을 때 느낄 촉감(예: '하루 종일 뛰어놀아도 자극 없는 촉촉한 코튼')과 세탁·관리하는 부모의 편리함을 강조. ~해요체 사용.",
-    "tpo": "■ 착용 상황(TPO) — '이 옷은 이럴 때 입히면 주인공이 돼요!'를 보여주는 영역. 일상(등원룩/등교룩)과 특별한 날(주말 나들이·생일파티·사진 촬영 등) 2가지 상황을 구체적인 장면으로 묘사. ~해요체 사용.",
+    "tpo": "■ 착용 상황(TPO) — '이 옷은 이럴 때 입히면 주인공이 돼요!'를 보여주는 영역. 일상(등원룩/등교룩)과 특별한 날(주말 나들이·생일파티·키즈카페·가족 모임·사진 촬영·계절 행사 등) 2가지 상황을 구체적인 장면으로 묘사. 타겟은 3~10세 남아·여아이므로 '돌잔치'(영유아 0~2세 행사)는 절대 언급하지 말 것. ~해요체 사용.",
     "styling": "■ 코디 팁(Styling) — 신발·모자·가방·헤어액세서리 등과의 센스 있는 매치 제안. '이렇게 입히면 오늘 패셔니스타 완성!' 느낌으로 톡톡 튀게 마무리. ~해요체 사용."
   },
-  "shortDescription": "상품 간략설명 — 검색결과·상품목록·SNS 공유 시 노출되는 요약 설명. 위 detail(제품 설명/소재/TPO/코디팁) 내용을 압축한 핵심 메시지. 60자 내외, 시즌·소재·핵심 특징이 자연스럽게 녹아든 한 문장. ~해요체."
+  "shortDescription": "상품 간략설명 — 검색결과·상품목록·SNS 공유 시 노출되는 요약 설명. 아래 구조를 따르는 하나의 긴 문장(100~150자)으로 작성하고 '~입니다'체로 끝맺기:\n① 디자인/디테일 특징으로 시작 (예: '넥과 소매의 배색 디테일이 포인트인 클래식 링거 디자인의 ○○로')\n② '~로/~이며' 다음 코디 활용 제안 ('데님, 반바지, 조거팬츠 등 다양한 하의와 코디하기 좋으며')\n③ 소재·핏 특징 ('편안한 핏과 부드러운 소재로')\n④ 착용 상황 나열 ('등원룩, 어린이집룩, 데일리룩으로 활용하기 좋은')\n⑤ 마지막에 제품 카테고리로 마무리 ('유아동 기본 반팔 티셔츠입니다')\n예시: '넥과 소매의 배색 디테일이 포인트인 클래식 링거 디자인의 아트웍 티셔츠로 데님, 반바지, 조거팬츠 등 다양한 하의와 코디하기 좋으며, 편안한 핏과 부드러운 소재로 등원룩, 어린이집룩, 데일리룩으로 활용하기 좋은 유아동 기본 반팔 티셔츠입니다.'\n위 예시처럼 디자인→코디→소재/핏→착용상황→카테고리 순서의 정보 나열형 문장으로, 감성적 수식어보다 사실 기반 특징을 담아 작성."
 }
 
 [상세 설명 작성 지침]
 너는 대한민국 최고의 광고 카피라이터이자 까다로운 3040 육아맘·육아대디의 마음을 훔치는 세일즈 글쓰기의 달인이야.
 단순히 옷의 스펙을 나열하는 게 아니라, "맞아, 우리 아이한테 딱 이거야!"라는 감탄이 나오게 만드는 스토리텔링형 문구를 작성해.
-브랜드: 오즈키즈(OZKIZ) — 아동복 전문 브랜드. 부모들이 스크롤을 내리며 읽을 때 지루하지 않도록 리드미컬하고 다정한 톤앤매너로 작성.
+브랜드: 오즈키즈(OZKIZ) — 아동복 전문 브랜드. 타겟은 3~10세 남아·여아입니다. 부모들이 스크롤을 내리며 읽을 때 지루하지 않도록 리드미컬하고 다정한 톤앤매너로 작성.
 각 항목은 실제 상세페이지에 바로 붙여넣을 수 있는 완성된 문장으로 작성.
 
 [슬로건 작성 지침]
@@ -1453,7 +1453,7 @@ JSON만 출력.`;
       const res = await fetch('/.netlify/functions/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:3000, messages:[{role:'user',content:userContent}] })
+        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:3200, messages:[{role:'user',content:userContent}] })
       });
       const d = await safeJson(res);
       if (d.error) throw new Error(d.error.message);
@@ -1463,7 +1463,7 @@ JSON만 출력.`;
     async function callGemini(prompt, key) {
       const parts = uploadedImages.map(img => ({ inline_data:{ mime_type:img.mimeType, data:img.dataUrl.split(',')[1] } }));
       parts.push({ text: prompt });
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{parts}], generationConfig:{ temperature:0.85, maxOutputTokens:3000, responseMimeType:'application/json' } }) });
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{parts}], generationConfig:{ temperature:0.85, maxOutputTokens:3200, responseMimeType:'application/json' } }) });
       const d = await safeJson(res);
       if (d.error) throw new Error(d.error.message);
       return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
