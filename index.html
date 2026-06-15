@@ -1366,8 +1366,11 @@
       try {
         return JSON.parse(text);
       } catch (e) {
+        if (res.status === 504 || res.status === 502 || res.status === 503) {
+          throw new Error(`서버 응답 시간이 초과됐어요 (HTTP ${res.status}). 항목이 많아 생성 시간이 길어진 것 같아요. 잠시 후 다시 시도해주세요.`);
+        }
         if (text.trim().toLowerCase().startsWith('<')) {
-          throw new Error(`서버 오류 응답을 받았어요 (HTTP ${res.status}). 이미지 용량이 너무 크거나 잠시 후 다시 시도해주세요.`);
+          throw new Error(`서버 오류 응답을 받았어요 (HTTP ${res.status}). 잠시 후 다시 시도해주세요.`);
         }
         throw new Error(`응답을 처리할 수 없습니다 (HTTP ${res.status}): ${text.slice(0,100)}`);
       }
@@ -1450,7 +1453,7 @@ JSON만 출력.`;
       const res = await fetch('/.netlify/functions/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:3500, messages:[{role:'user',content:userContent}] })
+        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:3000, messages:[{role:'user',content:userContent}] })
       });
       const d = await safeJson(res);
       if (d.error) throw new Error(d.error.message);
@@ -1460,7 +1463,7 @@ JSON만 출력.`;
     async function callGemini(prompt, key) {
       const parts = uploadedImages.map(img => ({ inline_data:{ mime_type:img.mimeType, data:img.dataUrl.split(',')[1] } }));
       parts.push({ text: prompt });
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{parts}], generationConfig:{ temperature:0.85, maxOutputTokens:3500, responseMimeType:'application/json' } }) });
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{parts}], generationConfig:{ temperature:0.85, maxOutputTokens:3000, responseMimeType:'application/json' } }) });
       const d = await safeJson(res);
       if (d.error) throw new Error(d.error.message);
       return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -1484,17 +1487,11 @@ JSON만 출력.`;
       let finalConcept = concept;
 
       try {
-        if (hasImages && !concept) {
-          loadingEl.querySelector('.loading-msg').innerHTML = `<em>${selectedModel === 'gemini' ? 'Gemini' : 'Claude'}</em>가 이미지를 분석하는 중입니다…`;
-          await analyzeImages();
-          finalConcept = document.getElementById('product-concept').value.trim();
-        }
-
         loadingEl.querySelector('.loading-msg').innerHTML = hasImages
           ? `<em>${selectedModel === 'gemini' ? 'Gemini' : 'Claude'}</em>가 이미지 ${uploadedImages.length}장을 보며 카피를 작성 중입니다…`
           : `<em>${selectedModel === 'gemini' ? 'Gemini' : 'Claude'}</em>가 카피를 생성하는 중입니다…`;
 
-        const prompt = buildPrompt(productName, finalConcept || '(이미지 분석 기반)');
+        const prompt = buildPrompt(productName, finalConcept || '(첨부된 이미지를 분석하여 제품 특징을 파악하고 작성해주세요)');
         const rawText = selectedModel === 'gemini'
           ? await callGemini(prompt, document.getElementById('gemini-api-key').value.trim())
           : await callClaude(prompt);
@@ -1504,6 +1501,11 @@ JSON만 출력.`;
         if (!jsonMatch) throw new Error('AI 응답에서 JSON을 찾을 수 없습니다. 다시 시도해주세요.');
         const result = JSON.parse(jsonMatch[0]);
         renderResult(productName, result);
+
+        // 이미지 기반 생성이었고 콘셉트가 비어있었다면, 결과의 SEO/설명에서 콘셉트란을 보조로 채워줌
+        if (hasImages && !concept && result.detail?.material) {
+          document.getElementById('product-concept').value = result.detail.material;
+        }
 
       } catch (err) {
         console.error(err);
