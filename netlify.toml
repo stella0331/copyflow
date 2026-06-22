@@ -1,6 +1,7 @@
 [build]
   publish = "."
   functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
 
 [functions]
   node_bundler = "esbuild"
@@ -13,6 +14,10 @@
 
 [functions.history-post]
   timeout = 10
+
+[[edge_functions]]
+  path = "/api/claude"
+  function = "claude"
 
 [[headers]]
   for = "/*"
