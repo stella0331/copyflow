@@ -1,4 +1,4 @@
-const { getStore } = require('@netlify/blobs');
+const { getDeployStore } = require('@netlify/blobs');
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -6,12 +6,12 @@ const CORS = {
   'Content-Type': 'application/json'
 };
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: CORS, body: '' };
   }
   try {
-    const store = getStore('copyflow-history');
+    const store = getDeployStore('copyflow-history');
     const raw = await store.get('history');
     const history = raw ? JSON.parse(raw) : [];
     return { statusCode: 200, headers: CORS, body: JSON.stringify(history) };
