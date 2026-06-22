@@ -1337,7 +1337,7 @@
       if (selectedModel === 'claude') {
         const parts = uploadedImages.map(img => ({ type:'image', source:{ type:'base64', media_type:img.mimeType, data:img.dataUrl.split(',')[1] } }));
         parts.push({ type:'text', text:prompt });
-        const res = await fetch('/.netlify/functions/claude', {
+        const res = await fetch('/api/claude', {
           method:'POST',
           headers:{ 'Content-Type':'application/json' },
           body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:400, messages:[{role:'user',content:parts}] })
@@ -1436,7 +1436,7 @@
       const userContent = uploadedImages.length > 0
         ? [...uploadedImages.map(img => ({ type:'image', source:{ type:'base64', media_type:img.mimeType, data:img.dataUrl.split(',')[1] } })), { type:'text', text:prompt }]
         : prompt;
-      const res = await fetch('/.netlify/functions/claude', {
+      const res = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:2800, messages:[{role:'user',content:userContent}] })
