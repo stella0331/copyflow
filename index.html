@@ -1340,7 +1340,7 @@
         const res = await fetch('/.netlify/functions/claude', {
           method:'POST',
           headers:{ 'Content-Type':'application/json' },
-          body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:400, messages:[{role:'user',content:parts}] })
+          body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:400, messages:[{role:'user',content:parts}] })
         });
         const d = await safeJson(res);
         if (d.error) throw new Error(d.error.message);
@@ -1439,7 +1439,7 @@
       const res = await fetch('/.netlify/functions/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:2800, messages:[{role:'user',content:userContent}] })
+        body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:2800, messages:[{role:'user',content:userContent}] })
       });
       const d = await safeJson(res);
       if (d.error) throw new Error(d.error.message);
