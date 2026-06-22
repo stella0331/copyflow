@@ -8,6 +8,12 @@
 [functions.claude]
   timeout = 26
 
+[functions.history-get]
+  timeout = 10
+
+[functions.history-post]
+  timeout = 10
+
 [[headers]]
   for = "/*"
   [headers.values]
