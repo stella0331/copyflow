@@ -786,6 +786,27 @@
 
     .btn-reset:hover { border-color: var(--text); color: var(--text); }
 
+    .btn-regenerate {
+      font-size: 15px; background: var(--surface2);
+      border: 1px solid var(--border); color: var(--text-muted);
+      padding: 5px 10px; border-radius: 4px;
+      cursor: pointer; font-family: var(--sans); transition: all 0.15s;
+      display: flex; align-items: center; gap: 5px;
+    }
+
+    .btn-regenerate:hover { border-color: var(--accent2); color: var(--accent2); }
+    .btn-regenerate:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-regenerate.spinning { pointer-events: none; }
+    .btn-regenerate.spinning::before {
+      content: '';
+      width: 12px; height: 12px;
+      border: 1.5px solid var(--border2);
+      border-top-color: var(--accent2);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+
     /* ── FOOTER ── */
     footer {
       border-top: 1px solid var(--border); padding: 20px 40px;
@@ -971,6 +992,7 @@
             <span class="block-title">SEO 최적화 상품 설명</span>
           </div>
           <button class="btn-copy" onclick="copyBlock('seo-content')">복사</button>
+          <button class="btn-regenerate" id="regen-seo" onclick="regenerate('seo')">↺ 재생성</button>
         </div>
         <div class="block-body">
           <div class="seo-box">
@@ -991,6 +1013,7 @@
             <span class="block-title">모바일 ATF 메인 카피</span>
           </div>
           <button class="btn-copy" onclick="copyBlock('atf-content')">복사</button>
+          <button class="btn-regenerate" id="regen-atf" onclick="regenerate('atf')">↺ 재생성</button>
         </div>
         <div class="block-body">
           <div class="atf-preview">
@@ -1008,6 +1031,7 @@
             <span class="block-num">03</span>
             <span class="block-title">후킹 문구 3가지 버전</span>
           </div>
+          <button class="btn-regenerate" id="regen-hooks" onclick="regenerate('hooks')">↺ 재생성</button>
         </div>
         <div class="block-body">
           <div class="variation-grid">
@@ -1038,6 +1062,7 @@
             <span class="block-title">원라인 슬로건</span>
           </div>
           <button class="btn-copy" onclick="copyBlock('slogan-raw')">전체 복사</button>
+          <button class="btn-regenerate" id="regen-slogans" onclick="regenerate('slogans')">↺ 재생성</button>
         </div>
         <div class="block-body">
           <!-- 감성 저격형 -->
@@ -1062,6 +1087,7 @@
             <span class="block-title">상세페이지 상세 설명</span>
           </div>
           <button class="btn-copy" onclick="copyBlock('detail-raw')">전체 복사</button>
+          <button class="btn-regenerate" id="regen-detail" onclick="regenerate('detail')">↺ 재생성</button>
         </div>
         <div class="block-body">
 
@@ -1101,6 +1127,7 @@
             <span class="block-title">상품 간략설명</span>
           </div>
           <button class="btn-copy" onclick="copyBlock('short-desc-content')">복사</button>
+          <button class="btn-regenerate" id="regen-shortdesc" onclick="regenerate('shortdesc')">↺ 재생성</button>
         </div>
         <div class="block-body">
           <div id="short-desc-content" style="font-size: 19px;line-height:1.9;color:var(--text);white-space:pre-wrap;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:16px;"></div>
@@ -1503,6 +1530,8 @@
     }
 
     function renderResult(productName, r, skipHistorySave) {
+      _lastProductName = productName;
+      _lastConcept = document.getElementById('product-concept').value.trim();
       document.getElementById('tag-product').textContent = productName;
       document.getElementById('tag-season').textContent = selectedSeason;
       const modelTag = document.getElementById('tag-model');
@@ -1680,6 +1709,128 @@
         btn.textContent = '✓ 복사됨'; btn.classList.add('copied');
         setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
       });
+    }
+
+    /* ── 항목별 재생성 ── */
+    let _lastProductName = '';
+    let _lastConcept = '';
+
+    async function regenerate(section) {
+      const productName = _lastProductName || document.getElementById('product-name').value.trim();
+      const concept = _lastConcept || document.getElementById('product-concept').value.trim();
+      if (!productName) { showError('제품명이 없습니다. 다시 생성해주세요.'); return; }
+
+      const btnId = {
+        seo: 'regen-seo', atf: 'regen-atf', hooks: 'regen-hooks',
+        slogans: 'regen-slogans', detail: 'regen-detail', shortdesc: 'regen-shortdesc'
+      }[section];
+      const btn = document.getElementById(btnId);
+      const origText = btn.innerHTML;
+      btn.classList.add('spinning');
+      btn.innerHTML = '';
+      btn.disabled = true;
+
+      // 해당 항목만 요청하는 프롬프트
+      const sectionPrompts = {
+        seo: `다음 제품의 SEO 최적화 상품 설명만 JSON으로 출력: {"seo":{"text":"50자 내외 설명","intent":"의도"}}`,
+        atf: `다음 제품의 ATF 메인 카피만 JSON으로 출력: {"atf":{"text":"최대 3줄 \\n으로 줄바꿈","intent":"의도"}}`,
+        hooks: `다음 제품의 후킹 문구 3종만 JSON으로 출력: {"hooks":{"a":{"text":"감성형","note":"의도"},"b":{"text":"기능형","note":"의도"},"c":{"text":"심리형","note":"의도"}}}`,
+        slogans: `다음 제품의 슬로건만 JSON으로 출력: {"slogans":{"emotional":[{"text":"","sub":""},{"text":"","sub":""},{"text":"","sub":""}],"witty":[{"text":"","sub":""},{"text":"","sub":""},{"text":"","sub":""}]}}`,
+        detail: `다음 제품의 상세설명 4개 항목만 JSON으로 출력: {"detail":{"desc":"제품설명","material":"소재","tpo":"착용상황","styling":"코디팁"}}`,
+        shortdesc: `다음 제품의 상품 간략설명만 JSON으로 출력: {"shortDescription":"100~150자 한 문장"}`
+      };
+
+      const hasImages = uploadedImages.length > 0;
+      const hasConcept = concept && concept.trim();
+      let imgNote = '';
+      if (hasImages && hasConcept) imgNote = `\n- 첨부 이미지: ${uploadedImages.length}장 (이미지와 제품 특징을 함께 반영해주세요)`;
+      else if (hasImages) imgNote = `\n- 첨부 이미지: ${uploadedImages.length}장 (이미지를 분석해서 작성해주세요)`;
+
+      const sectionGuide = {
+        seo: '~해요체 사용. 검색 키워드 자연스럽게 포함.',
+        atf: '~해요체 사용. 핵심 소구점 즉각 인지되도록.',
+        hooks: '~해요체 사용. 3040 육아맘·대디 타겟.',
+        slogans: '순수 국문 간결체, 영문·외래어 금지. 감성형 3개·위트형 3개.',
+        detail: '~해요체. 3~10세 타겟. 돌잔치 언급 금지. 스토리텔링형 완성 문장.',
+        shortdesc: '~입니다체. 디자인→코디→소재·핏→착용상황→카테고리 순 한 문장 100~150자.'
+      };
+
+      const prompt = `제품: ${productName}\n특징: ${hasConcept ? concept : '(이미지 참고)'}${imgNote}\n시즌: ${selectedSeason}\n브랜드: 오즈키즈(OZKIZ), 3~10세 남아·여아\n\n${sectionPrompts[section]}\n\n지침: ${sectionGuide[section]}\nJSON만 출력.`;
+
+      try {
+        const rawText = selectedModel === 'gemini'
+          ? await callGemini(prompt, document.getElementById('gemini-api-key').value.trim())
+          : await callClaude(prompt);
+
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('응답에서 JSON을 찾을 수 없어요.');
+        const r = JSON.parse(jsonMatch[0]);
+
+        // 해당 항목만 업데이트
+        if (section === 'seo' && r.seo) {
+          document.getElementById('seo-content').textContent = r.seo.text || '—';
+          document.getElementById('seo-char-count').textContent = `${(r.seo.text||'').length}자`;
+          document.getElementById('seo-intent').textContent = r.seo.intent ? `💡 ${r.seo.intent}` : '';
+        }
+        if (section === 'atf' && r.atf) {
+          const atfText = (r.atf.text || '—').replace(/\\n/g, '\n');
+          document.getElementById('atf-content').innerHTML = atfText.split('\n').map(l=>`<div>${l}</div>`).join('');
+          document.getElementById('atf-intent').textContent = r.atf.intent ? `💡 ${r.atf.intent}` : '';
+        }
+        if (section === 'hooks' && r.hooks) {
+          ['a','b','c'].forEach(k => {
+            document.getElementById(`hook-${k}`).textContent = r.hooks[k]?.text || '—';
+            document.getElementById(`hook-${k}-note`).textContent = r.hooks[k]?.note || '';
+          });
+        }
+        if (section === 'slogans' && r.slogans) {
+          const sl = r.slogans;
+          const renderSlogans = (items) => (items||[]).map((s,i) => `
+            <li class="slogan-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+              <div style="display:flex;align-items:center;gap:14px;width:100%;">
+                <span class="slogan-num">${String(i+1).padStart(2,'0')}</span>
+                <span class="slogan-text" style="flex:1;">${s.text}</span>
+                <button class="slogan-copy" onclick="copyText('${(s.text+(s.sub?'\n'+s.sub:'')).replace(/'/g,"\\'")}',this)">⧉</button>
+              </div>
+              ${s.sub ? `<div style="padding-left:36px;font-size:14px;color:var(--text-muted);font-style:italic;">${s.sub}</div>` : ''}
+            </li>`).join('');
+          document.getElementById('slogan-emotional').innerHTML = renderSlogans(sl.emotional);
+          document.getElementById('slogan-witty').innerHTML = renderSlogans(sl.witty);
+          const allSlogans = [...(sl.emotional||[]), ...(sl.witty||[])];
+          document.getElementById('slogan-raw').textContent =
+            '[감성 저격형]\n'+(sl.emotional||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n')+
+            '\n\n[직관·위트형]\n'+(sl.witty||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n');
+        }
+        if (section === 'detail' && r.detail) {
+          const det = r.detail;
+          document.getElementById('detail-desc').textContent = det.desc || '—';
+          document.getElementById('detail-material').textContent = det.material || '—';
+          document.getElementById('detail-tpo').textContent = det.tpo || '—';
+          document.getElementById('detail-styling').textContent = det.styling || '—';
+          document.getElementById('detail-raw').textContent =
+            `[제품 설명]\n${det.desc||''}\n\n[소재 디테일]\n${det.material||''}\n\n[착용 상황 TPO]\n${det.tpo||''}\n\n[코디 팁]\n${det.styling||''}`;
+        }
+        if (section === 'shortdesc' && r.shortDescription) {
+          const sd = r.shortDescription;
+          document.getElementById('short-desc-content').textContent = sd;
+          document.getElementById('short-desc-char-count').textContent = `${sd.length}자`;
+        }
+
+        // 버튼 완료 표시
+        btn.innerHTML = '✓ 완료';
+        btn.style.color = 'var(--green)';
+        setTimeout(() => {
+          btn.innerHTML = origText;
+          btn.style.color = '';
+        }, 2000);
+
+      } catch(err) {
+        showError(`재생성 오류: ${err.message}`);
+        btn.innerHTML = origText;
+      } finally {
+        btn.classList.remove('spinning');
+        btn.disabled = false;
+      }
     }
 
     function copyAll() {
