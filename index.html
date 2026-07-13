@@ -895,9 +895,7 @@
         <p class="field-hint" style="margin-top:0;">✓ Claude API는 회사 계정으로 자동 연결됩니다. 별도 키 입력이 필요 없어요.</p>
       </div>
       <div class="api-key-field" id="gemini-key-field">
-        <label for="gemini-api-key" style="margin-top:0;">Gemini API Key</label>
-        <input type="password" id="gemini-api-key" placeholder="AIza..." />
-        <p class="field-hint">브라우저 내에서만 사용되며 서버로 전송되지 않습니다. <a href="https://aistudio.google.com/app/apikey" target="_blank">발급받기 →</a></p>
+        <p class="field-hint" style="margin-top:0;">✓ Gemini API는 회사 계정으로 자동 연결됩니다. 별도 키 입력이 필요 없어요.</p>
       </div>
     </div>
 
@@ -1005,25 +1003,6 @@
         </div>
       </div>
 
-      <!-- 02. ATF -->
-      <div class="result-block">
-        <div class="block-head">
-          <div class="block-meta">
-            <span class="block-num">02</span>
-            <span class="block-title">모바일 ATF 메인 카피</span>
-          </div>
-          <button class="btn-copy" onclick="copyBlock('atf-content')">복사</button>
-          <button class="btn-regenerate" id="regen-atf" onclick="regenerate('atf')">↺ 재생성</button>
-        </div>
-        <div class="block-body">
-          <div class="atf-preview">
-            <div class="atf-phone-label">📱 모바일 화면 미리보기</div>
-            <div class="atf-text-lines" id="atf-content">—</div>
-          </div>
-          <div class="block-intent" id="atf-intent"></div>
-        </div>
-      </div>
-
       <!-- 03. HOOKS -->
       <div class="result-block">
         <div class="block-head">
@@ -1071,9 +1050,14 @@
             <ul class="slogan-list" id="slogan-emotional"></ul>
           </div>
           <!-- 직관·위트형 -->
-          <div>
+          <div style="margin-bottom:24px;">
             <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent3);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);">직관·위트형</div>
             <ul class="slogan-list" id="slogan-witty"></ul>
+          </div>
+          <!-- USP형 -->
+          <div>
+            <div style="font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--green);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);">USP형</div>
+            <ul class="slogan-list" id="slogan-usp"></ul>
           </div>
           <div id="slogan-raw" style="display:none;"></div>
         </div>
@@ -1353,9 +1337,6 @@
     /* ── Vision 분석 ── */
     async function analyzeImages() {
       if (uploadedImages.length === 0) return;
-      if (selectedModel === 'gemini' && !document.getElementById('gemini-api-key').value.trim()) {
-        showError('Gemini API Key를 먼저 입력해주세요.'); return;
-      }
       document.getElementById('analysis-banner').classList.remove('visible');
 
       const prompt = `당신은 한국 이커머스 상품 전문 분석가입니다. 첨부된 제품 이미지(${uploadedImages.length}장)를 분석하여 카피 작성에 활용할 제품 특징을 쉼표로 구분된 목록으로만 출력하세요. 예: 아이스 소재, 민트 컬러, 반팔 티셔츠, 라운드넥, 유아동 전용. 다른 설명 없이 목록만 출력하세요.`;
@@ -1373,9 +1354,12 @@
         if (d.error) throw new Error(d.error.message);
         result = d.content?.map(i=>i.text||'').join('').trim();
       } else {
-        const key = document.getElementById('gemini-api-key').value.trim();
         const imageParts = uploadedImages.map(img => ({ inline_data:{ mime_type:img.mimeType, data:img.dataUrl.split(',')[1] } }));
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{parts:[...imageParts,{text:prompt}]}], generationConfig:{temperature:0.3,maxOutputTokens:400} }) });
+        const res = await fetch('/.netlify/functions/gemini', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ model:'gemini-2.5-flash-latest', contents:[{parts:[...imageParts,{text:prompt}]}], generationConfig:{temperature:0.3,maxOutputTokens:400} })
+        });
         const d = await safeJson(res);
         if (d.error) throw new Error(d.error.message);
         result = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
@@ -1422,41 +1406,57 @@
         imgNote = `\n- 첨부 이미지: ${uploadedImages.length}장 — 별도 텍스트 정보가 없으니, 이미지를 자세히 분석해서 색상·소재 질감·디자인 디테일·핏·카테고리를 직접 파악한 뒤 이를 바탕으로 작성해주세요.`;
       }
 
-      return `당신은 한국 이커머스 카피라이터입니다. 무신사·29CM 스타일의 카피를 작성합니다.
+      return `너는 프리미엄 아동복 브랜드 '오즈키즈(OZKIZ)'의 전문 에이전트이자 GEO(생성형 엔진 최적화) 전략 카피라이터야. 사용자가 업로드한 제품 이미지를 분석하여, 고객의 마음을 움직이는 감성 문구와 AI 검색 엔진이 가장 좋아하는 구조화된 정보를 생성하는 것이 네 임무야.
 
 제품: ${name}
 특징: ${hasConcept ? concept : '(아래 이미지 참고)'}${imgNote}
 시즌: ${selectedSeason}
+브랜드: 오즈키즈(OZKIZ) | 타겟: 3~10세 남아·여아 | 3040 젊은 부모
 
 다음 JSON만 출력 (다른 텍스트 없이):
 
 {
-  "seo": {"text": "50자 내외 SEO 상품 설명", "intent": "의도 한 줄"},
-  "atf": {"text": "ATF 카피 최대 3줄, \\n로 줄바꿈", "intent": "의도 한 줄"},
+  "seo": {
+    "text": "브랜드명 + 제품 핵심 특징 + 타겟 + 활용 상황이 자연스럽게 담긴 50~70자 SEO 최적화 한 문장. 예: '오즈키즈 LED 글리터 구두는 보석 리본과 하늘빛 반짝임으로 특별한 날 빛나는 여아 신발입니다.'",
+    "intent": "SEO 기획 의도 한 줄"
+  },
   "hooks": {
-    "a": {"text": "감성형 후킹 문구", "note": "의도"},
-    "b": {"text": "기능/혜택형 후킹 문구", "note": "의도"},
-    "c": {"text": "심리/마감형 후킹 문구", "note": "의도"}
+    "a": {"text": "감성형 — 아이의 꿈·설렘·부모의 자부심을 자극하는 후킹 문구", "note": "기획 의도"},
+    "b": {"text": "기능/혜택형 — 제품 스펙·실용성·시즌 특수성을 강조하는 후킹 문구", "note": "기획 의도"},
+    "c": {"text": "심리/마감형 — 지금 사야 하는 이유를 제시하는 후킹 문구", "note": "기획 의도"}
   },
   "slogans": {
-    "emotional": [{"text":"감성 슬로건1","sub":""},{"text":"감성 슬로건2","sub":""},{"text":"감성 슬로건3","sub":""}],
-    "witty": [{"text":"위트 슬로건1","sub":""},{"text":"위트 슬로건2","sub":""},{"text":"위트 슬로건3","sub":""}]
+    "emotional": [
+      {"text": "감성 저격형 슬로건 1 — 아이의 꿈과 부모의 감동을 관통하는 시적인 한 줄", "sub": ""},
+      {"text": "감성 저격형 슬로건 2", "sub": ""}
+    ],
+    "witty": [
+      {"text": "직관·위트형 슬로건 1 — 트렌디하고 톡톡 튀며 구매 욕구를 자극하는 한 줄", "sub": ""},
+      {"text": "직관·위트형 슬로건 2", "sub": ""}
+    ],
+    "usp": [
+      {"text": "USP형 슬로건 1 — 이 제품만의 독보적인 기능·차별점을 강렬하게 압축한 한 줄", "sub": ""},
+      {"text": "USP형 슬로건 2", "sub": ""}
+    ]
   },
   "detail": {
-    "desc": "제품 설명: 헤드카피 한 줄 + 구매 이유 2~3줄",
-    "material": "소재: 촉감·관리 편의성 강조",
-    "tpo": "착용상황: 일상+특별한날 2가지 장면",
-    "styling": "코디팁: 아이템 매치 제안"
+    "desc": "제품 설명(상세페이지용) — 아이가 이 제품을 착용했을 때의 감성적 장면·설렘으로 시작하는 헤드카피 한 줄 + 제품의 핵심 디자인·기능·특별함을 부모의 마음을 움직이는 스토리텔링 문장 2~3줄. ~해요체.",
+    "material": "소재 디테일(Material) — 소재명·질감·표면 처리·기능성(LED·글리터·방수 등)·마감 디테일을 카피라이터 시선으로 재해석. 아이가 착용했을 때의 느낌과 부모의 관리 편의성까지 묘사. 3~5문장. ~해요체.",
+    "tpo": "착용 상황(TPO) — '이 제품은 이럴 때 입히면 주인공이 돼요!'를 보여주는 영역. 구체적인 날짜·장소·상황 2가지를 생생하게 묘사. 3~10세 타겟에 맞는 상황만 (돌잔치 절대 금지). ~해요체.",
+    "styling": "코디 팁(Styling) — 어울리는 의류·액세서리·색상 조합을 센스 있게 제안. '이렇게 매치하면 동화 속 주인공 완성!' 느낌으로 구체적으로. ~해요체."
   },
-  "shortDescription": "디자인특징→코디활용(~로/~이며)→소재·핏→착용상황→카테고리(~입니다) 순 100~150자 한 문장"
+  "shortDescription": "디자인 디테일·소재 특징으로 시작 → 코디 활용(~로/~이며) → 착용 상황(생일파티·나들이룩 등) → 제품 카테고리(~입니다) 순서의 정보 나열형 한 문장 100~150자. 예: '보석 리본과 하늘빛 글리터로 특별한 날 더욱 빛나는 LED 구두로, 샤 드레스·화이트 원피스와 코디하기 좋으며 유치원 생일파티·가족 외출·공주 행사에 안성맞춤인 유아동 여아 구두입니다.'"
 }
 
-지침:
-- 브랜드는 오즈키즈(OZKIZ), 타겟 3~10세 남아·여아. '돌잔치' 언급 금지.
-- slogans 제외 모든 문구는 '~해요'체. slogans는 순수 국문 간결체(영문·외래어 금지).
-- 감성 슬로건: 아이의 꿈·부모의 자부심 자극, 흔한 표현 금지. 위트 슬로건: 트렌디하고 톡톡 튀게.
-- detail 각 항목은 실제 상세페이지에 쓸 완성 문장으로, 스토리텔링형으로 작성.
-- shortDescription 예시: "넥과 소매 배색이 포인트인 아트웍 티셔츠로 데님·반바지와 코디하기 좋으며, 편안한 핏과 부드러운 소재로 등원룩·데일리룩으로 활용하기 좋은 유아동 반팔 티셔츠입니다."`;
+작성 지침:
+- slogans 제외 모든 문구는 '~해요', '~예요', '~답니다', '~줄게요' 등 친근하고 따뜻한 존댓말체.
+- slogans는 순수 국문 간결체·시적인 명사형. 영문·외래어 절대 금지.
+- 감성 저격형: 아이의 꿈·설렘·부모의 자부심을 관통하는 시적인 한 줄. 진부한 표현('예쁜', '귀여운') 금지.
+- 직관·위트형: 트렌디하고 톡톡 튀며 구매 욕구를 직접 자극하는 한 줄.
+- USP형: 이 제품만의 독보적인 기능·소재·디자인 차별점을 한 줄로 강렬하게 압축. 경쟁 제품과 차별되는 핵심 강점이 명확히 드러나야 함.
+- 이미지에서 보이는 색상·소재 질감·디자인 디테일을 최대한 구체적이고 생생하게 묘사.
+- '돌잔치' 언급 절대 금지. 타겟은 3~10세.
+JSON만 출력.`;
     }
 
     async function callClaude(prompt) {
@@ -1466,17 +1466,21 @@
       const res = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:2800, messages:[{role:'user',content:userContent}] })
+        body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:3200, messages:[{role:'user',content:userContent}] })
       });
       const d = await safeJson(res);
       if (d.error) throw new Error(d.error.message);
       return d.content?.map(i=>i.text||'').join('') || '';
     }
 
-    async function callGemini(prompt, key) {
+    async function callGemini(prompt) {
       const parts = uploadedImages.map(img => ({ inline_data:{ mime_type:img.mimeType, data:img.dataUrl.split(',')[1] } }));
       parts.push({ text: prompt });
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{parts}], generationConfig:{ temperature:0.85, maxOutputTokens:2800, responseMimeType:'application/json' } }) });
+      const res = await fetch('/.netlify/functions/gemini', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ model:'gemini-2.5-flash-latest', contents:[{parts}], generationConfig:{ temperature:0.85, maxOutputTokens:3200, responseMimeType:'application/json' } })
+      });
       const d = await safeJson(res);
       if (d.error) throw new Error(d.error.message);
       return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -1489,7 +1493,6 @@
 
       if (!productName) { showError('제품명을 입력해주세요.'); return; }
       if (!concept && !hasImages) { showError('이미지를 업로드하거나 제품 특징을 입력해주세요.'); return; }
-      if (selectedModel === 'gemini' && !document.getElementById('gemini-api-key').value.trim()) { showError('Gemini API Key를 입력해주세요.'); return; }
 
       const btn = document.getElementById('generate-btn');
       btn.classList.add('loading'); btn.disabled = true;
@@ -1506,7 +1509,7 @@
 
         const prompt = buildPrompt(productName, finalConcept || '(첨부된 이미지를 분석하여 제품 특징을 파악하고 작성해주세요)');
         const rawText = selectedModel === 'gemini'
-          ? await callGemini(prompt, document.getElementById('gemini-api-key').value.trim())
+          ? await callGemini(prompt)
           : await callClaude(prompt);
 
         // JSON 블록만 추출 (앞뒤 텍스트·마크다운 코드블록 제거)
@@ -1544,10 +1547,6 @@
       document.getElementById('seo-char-count').textContent = `${seoText.length}자`;
       document.getElementById('seo-intent').textContent = r.seo?.intent ? `💡 ${r.seo.intent}` : '';
 
-      const atfText = (r.atf?.text || '—').replace(/\\n/g, '\n');
-      document.getElementById('atf-content').innerHTML = atfText.split('\n').map(l => `<div>${l}</div>`).join('');
-      document.getElementById('atf-intent').textContent = r.atf?.intent ? `💡 ${r.atf.intent}` : '';
-
       ['a','b','c'].forEach(k => {
         document.getElementById(`hook-${k}`).textContent = r.hooks?.[k]?.text || '—';
         document.getElementById(`hook-${k}-note`).textContent = r.hooks?.[k]?.note || '';
@@ -1567,18 +1566,20 @@
 
       document.getElementById('slogan-emotional').innerHTML = renderSlogans(sl.emotional);
       document.getElementById('slogan-witty').innerHTML = renderSlogans(sl.witty);
+      document.getElementById('slogan-usp').innerHTML = renderSlogans(sl.usp);
 
-      const allSlogans = [...(sl.emotional||[]), ...(sl.witty||[])];
+      const allSlogans = [...(sl.emotional||[]), ...(sl.witty||[]), ...(sl.usp||[])];
       document.getElementById('slogan-raw').textContent =
         '[감성 저격형]\n' + (sl.emotional||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n') +
-        '\n\n[직관·위트형]\n' + (sl.witty||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n');
+        '\n\n[직관·위트형]\n' + (sl.witty||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n') +
+        '\n\n[USP형]\n' + (sl.usp||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n');
 
       // 05. 상세 설명
       const det = r.detail || {};
-      document.getElementById('detail-desc').textContent     = det.desc     || '—';
-      document.getElementById('detail-material').textContent = det.material  || '—';
-      document.getElementById('detail-tpo').textContent      = det.tpo       || '—';
-      document.getElementById('detail-styling').textContent  = det.styling   || '—';
+      document.getElementById('detail-desc').textContent     = det.desc      || '—';
+      document.getElementById('detail-material').textContent = det.material   || '—';
+      document.getElementById('detail-tpo').textContent      = det.tpo        || '—';
+      document.getElementById('detail-styling').textContent  = det.styling    || '—';
       document.getElementById('detail-raw').textContent =
         `[제품 설명]\n${det.desc||''}\n\n[소재 디테일]\n${det.material||''}\n\n[착용 상황 TPO]\n${det.tpo||''}\n\n[코디 팁]\n${det.styling||''}`;
 
@@ -1587,7 +1588,7 @@
       document.getElementById('short-desc-content').textContent = shortDesc;
       document.getElementById('short-desc-char-count').textContent = `${shortDesc.length}자`;
 
-      fullResultText = `[SEO 설명]\n${seoText}\n\n[ATF 카피]\n${atfText}\n\n[후킹 문구]\nA: ${r.hooks?.a?.text}\nB: ${r.hooks?.b?.text}\nC: ${r.hooks?.c?.text}\n\n[슬로건 — 감성 저격형]\n${(sl.emotional||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n')}\n\n[슬로건 — 직관·위트형]\n${(sl.witty||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n')}\n\n[제품 설명]\n${det.desc||''}\n\n[소재 디테일]\n${det.material||''}\n\n[착용 상황 TPO]\n${det.tpo||''}\n\n[코디 팁]\n${det.styling||''}\n\n[상품 간략설명]\n${shortDesc}`;
+      fullResultText = `[SEO 설명]\n${seoText}\n\n[후킹 문구]\nA: ${r.hooks?.a?.text}\nB: ${r.hooks?.b?.text}\nC: ${r.hooks?.c?.text}\n\n[슬로건 — 감성 저격형]\n${(sl.emotional||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n')}\n\n[슬로건 — 직관·위트형]\n${(sl.witty||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n')}\n\n[슬로건 — USP형]\n${(sl.usp||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n')}\n\n[제품 설명]\n${det.desc||''}\n\n[소재 디테일]\n${det.material||''}\n\n[착용 상황 TPO]\n${det.tpo||''}\n\n[코디 팁]\n${det.styling||''}\n\n[상품 간략설명]\n${shortDesc}`;
 
       document.getElementById('result-section').classList.add('visible');
       document.getElementById('result-section').scrollIntoView({ behavior:'smooth', block:'start' });
@@ -1721,7 +1722,7 @@
       if (!productName) { showError('제품명이 없습니다. 다시 생성해주세요.'); return; }
 
       const btnId = {
-        seo: 'regen-seo', atf: 'regen-atf', hooks: 'regen-hooks',
+        seo: 'regen-seo', hooks: 'regen-hooks',
         slogans: 'regen-slogans', detail: 'regen-detail', shortdesc: 'regen-shortdesc'
       }[section];
       const btn = document.getElementById(btnId);
@@ -1732,10 +1733,9 @@
 
       // 해당 항목만 요청하는 프롬프트
       const sectionPrompts = {
-        seo: `다음 제품의 SEO 최적화 상품 설명만 JSON으로 출력: {"seo":{"text":"50자 내외 설명","intent":"의도"}}`,
-        atf: `다음 제품의 ATF 메인 카피만 JSON으로 출력: {"atf":{"text":"최대 3줄 \\n으로 줄바꿈","intent":"의도"}}`,
+        seo: `다음 제품의 SEO 최적화 상품 설명만 JSON으로 출력: {"seo":{"text":"50~70자 설명","intent":"의도"}}`,
         hooks: `다음 제품의 후킹 문구 3종만 JSON으로 출력: {"hooks":{"a":{"text":"감성형","note":"의도"},"b":{"text":"기능형","note":"의도"},"c":{"text":"심리형","note":"의도"}}}`,
-        slogans: `다음 제품의 슬로건만 JSON으로 출력: {"slogans":{"emotional":[{"text":"","sub":""},{"text":"","sub":""},{"text":"","sub":""}],"witty":[{"text":"","sub":""},{"text":"","sub":""},{"text":"","sub":""}]}}`,
+        slogans: `다음 제품의 슬로건만 JSON으로 출력: {"slogans":{"emotional":[{"text":"","sub":""},{"text":"","sub":""}],"witty":[{"text":"","sub":""},{"text":"","sub":""}],"usp":[{"text":"","sub":""},{"text":"","sub":""}]}}`,
         detail: `다음 제품의 상세설명 4개 항목만 JSON으로 출력: {"detail":{"desc":"제품설명","material":"소재","tpo":"착용상황","styling":"코디팁"}}`,
         shortdesc: `다음 제품의 상품 간략설명만 JSON으로 출력: {"shortDescription":"100~150자 한 문장"}`
       };
@@ -1748,9 +1748,8 @@
 
       const sectionGuide = {
         seo: '~해요체 사용. 검색 키워드 자연스럽게 포함.',
-        atf: '~해요체 사용. 핵심 소구점 즉각 인지되도록.',
         hooks: '~해요체 사용. 3040 육아맘·대디 타겟.',
-        slogans: '순수 국문 간결체, 영문·외래어 금지. 감성형 3개·위트형 3개.',
+        slogans: '순수 국문 간결체, 영문·외래어 금지. 감성형 2개·위트형 2개·USP형 2개. USP형은 이 제품만의 독보적 차별점을 한 줄로.',
         detail: '~해요체. 3~10세 타겟. 돌잔치 언급 금지. 스토리텔링형 완성 문장.',
         shortdesc: '~입니다체. 디자인→코디→소재·핏→착용상황→카테고리 순 한 문장 100~150자.'
       };
@@ -1759,23 +1758,17 @@
 
       try {
         const rawText = selectedModel === 'gemini'
-          ? await callGemini(prompt, document.getElementById('gemini-api-key').value.trim())
+          ? await callGemini(prompt)
           : await callClaude(prompt);
 
         const jsonMatch = rawText.match(/\{[\s\S]*\}/);
         if (!jsonMatch) throw new Error('응답에서 JSON을 찾을 수 없어요.');
         const r = JSON.parse(jsonMatch[0]);
 
-        // 해당 항목만 업데이트
         if (section === 'seo' && r.seo) {
           document.getElementById('seo-content').textContent = r.seo.text || '—';
           document.getElementById('seo-char-count').textContent = `${(r.seo.text||'').length}자`;
           document.getElementById('seo-intent').textContent = r.seo.intent ? `💡 ${r.seo.intent}` : '';
-        }
-        if (section === 'atf' && r.atf) {
-          const atfText = (r.atf.text || '—').replace(/\\n/g, '\n');
-          document.getElementById('atf-content').innerHTML = atfText.split('\n').map(l=>`<div>${l}</div>`).join('');
-          document.getElementById('atf-intent').textContent = r.atf.intent ? `💡 ${r.atf.intent}` : '';
         }
         if (section === 'hooks' && r.hooks) {
           ['a','b','c'].forEach(k => {
@@ -1796,10 +1789,11 @@
             </li>`).join('');
           document.getElementById('slogan-emotional').innerHTML = renderSlogans(sl.emotional);
           document.getElementById('slogan-witty').innerHTML = renderSlogans(sl.witty);
-          const allSlogans = [...(sl.emotional||[]), ...(sl.witty||[])];
+          document.getElementById('slogan-usp').innerHTML = renderSlogans(sl.usp);
           document.getElementById('slogan-raw').textContent =
             '[감성 저격형]\n'+(sl.emotional||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n')+
-            '\n\n[직관·위트형]\n'+(sl.witty||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n');
+            '\n\n[직관·위트형]\n'+(sl.witty||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n')+
+            '\n\n[USP형]\n'+(sl.usp||[]).map(s=>s.text+(s.sub?'\n'+s.sub:'')).join('\n\n');
         }
         if (section === 'detail' && r.detail) {
           const det = r.detail;
