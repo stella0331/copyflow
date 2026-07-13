@@ -1618,6 +1618,10 @@ JSON만 출력.`;
       document.getElementById('tab-history').classList.toggle('active', tab === 'history');
       if (tab === 'generate') {
         document.getElementById('input-section').style.display = '';
+        const resultEl = document.getElementById('result-section');
+        resultEl.classList.remove('visible');
+        resultEl.style.display = 'none';
+        setTimeout(() => { resultEl.style.display = ''; }, 50);
       }
       if (tab === 'history') renderHistory();
     }
