@@ -29,7 +29,7 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: '요청 형식이 잘못되었습니다.' }) };
   }
 
-  const { model = 'gemini-2.5-flash-latest', ...payload } = body;
+  const { model = 'gemini-2.5-flash', ...payload } = body;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
