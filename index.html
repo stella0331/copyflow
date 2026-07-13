@@ -1614,7 +1614,33 @@ JSON만 출력.`;
       catch(e) { return []; }
     }
 
-    function saveToHistory(productName, result) {
+    /* 이미지를 200px JPEG 50%로 압축해 썸네일 생성 */
+    function makeThumbnail(dataUrl, mimeType) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX = 200;
+          let w = img.width, h = img.height;
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else       { w = Math.round(w * MAX / h); h = MAX; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.5));
+        };
+        img.onerror = () => resolve(null);
+        img.src = dataUrl;
+      });
+    }
+
+    async function saveToHistory(productName, result) {
+      // 업로드된 이미지에서 썸네일 생성 (최대 3장)
+      const thumbnails = [];
+      for (const img of uploadedImages.slice(0, 3)) {
+        const thumb = await makeThumbnail(img.dataUrl, img.mimeType);
+        if (thumb) thumbnails.push(thumb);
+      }
+
       const history = getHistory();
       const entry = {
         id: Date.now(),
@@ -1622,6 +1648,7 @@ JSON만 출력.`;
         season: selectedSeason,
         model: selectedModel,
         timestamp: new Date().toISOString(),
+        thumbnails,
         result
       };
       history.unshift(entry);
@@ -1657,6 +1684,9 @@ JSON만 출력.`;
         const seoText = entry.result?.seo?.text || '';
         const modelLabel = entry.model === 'gemini' ? '◈ Gemini' : '✦ Claude';
         const modelClass = entry.model === 'gemini' ? 'model-gemini' : 'model-claude';
+        const thumbsHtml = (entry.thumbnails || []).map(t =>
+          `<img src="${t}" style="width:44px;height:44px;object-fit:cover;border-radius:5px;border:0.5px solid var(--border);" />`
+        ).join('');
         return `
         <div class="history-item" onclick="loadHistoryItem(${entry.id})">
           <div class="history-item-head">
@@ -1666,11 +1696,16 @@ JSON만 출력.`;
               <button class="history-item-delete" onclick="event.stopPropagation(); deleteHistoryItem(${entry.id})">삭제</button>
             </div>
           </div>
-          <div class="history-item-tags" style="margin-bottom:8px;">
-            <span class="result-tag season">${entry.season}</span>
-            <span class="result-tag ${modelClass}">${modelLabel}</span>
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            ${thumbsHtml ? `<div style="display:flex;gap:5px;flex-shrink:0;">${thumbsHtml}</div>` : ''}
+            <div style="flex:1;min-width:0;">
+              <div class="history-item-tags" style="margin-bottom:6px;">
+                <span class="result-tag season">${entry.season}</span>
+                <span class="result-tag ${modelClass}">${modelLabel}</span>
+              </div>
+              <div class="history-item-preview">${seoText}</div>
+            </div>
           </div>
-          <div class="history-item-preview">${seoText}</div>
         </div>`;
       }).join('');
     }
