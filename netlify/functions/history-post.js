@@ -51,6 +51,7 @@ exports.handler = async (event) => {
           product_name: entry.productName,
           season: entry.season,
           model: entry.model,
+          thumbnails: entry.thumbnails || [],
           result: entry.result
         })
       });
