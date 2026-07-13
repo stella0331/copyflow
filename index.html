@@ -1398,7 +1398,10 @@
 
     function scrollToTop() {
       document.getElementById('input-section').style.display = '';
-      document.getElementById('result-section').classList.remove('visible');
+      const resultEl = document.getElementById('result-section');
+      resultEl.classList.remove('visible');
+      resultEl.style.display = 'none';
+      setTimeout(() => { resultEl.style.display = ''; }, 50);
       document.getElementById('tab-btn-generate').classList.add('active');
       document.getElementById('tab-btn-history').classList.remove('active');
       document.getElementById('tab-generate').classList.add('active');
