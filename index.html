@@ -1399,6 +1399,10 @@
     function scrollToTop() {
       document.getElementById('input-section').style.display = '';
       document.getElementById('result-section').classList.remove('visible');
+      document.getElementById('tab-btn-generate').classList.add('active');
+      document.getElementById('tab-btn-history').classList.remove('active');
+      document.getElementById('tab-generate').classList.add('active');
+      document.getElementById('tab-history').classList.remove('active');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -1725,7 +1729,13 @@ JSON만 출력.`;
       if (!entry) return;
       selectedSeason = entry.season;
       selectedModel = entry.model;
-      switchTab('generate');
+
+      // 히스토리 탭은 그대로 유지하고, 생성 탭 패널만 활성화해서 결과 표시
+      document.getElementById('tab-generate').classList.add('active');
+      document.getElementById('tab-history').classList.remove('active');
+      document.getElementById('tab-btn-generate').classList.remove('active');
+      document.getElementById('tab-btn-history').classList.add('active');
+
       // 입력 폼 숨기고 결과만 표시
       document.getElementById('input-section').style.display = 'none';
       renderResult(entry.productName, entry.result, true);
