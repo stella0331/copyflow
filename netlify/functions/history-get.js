@@ -34,6 +34,7 @@ exports.handler = async (event) => {
       season: row.season,
       model: row.model,
       timestamp: row.created_at,
+      thumbnails: row.thumbnails || [],
       result: row.result
     }));
 
