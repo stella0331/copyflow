@@ -880,6 +880,7 @@
     <!-- GENERATE TAB -->
     <div class="tab-panel active" id="tab-generate">
 
+    <div id="input-section">
     <!-- ① AI 모델 -->
     <div class="card">
       <div class="card-title"><span class="card-title-num">01</span>AI 모델</div>
@@ -965,6 +966,8 @@
     </div>
 
     <!-- LOADING -->
+    </div> <!-- /#input-section -->
+
     <div class="loading-state" id="loading-state">
       <div class="loading-spinner"></div>
       <p class="loading-msg"><em>Claude</em>가 카피를 생성하는 중입니다…</p>
@@ -1348,7 +1351,7 @@
         const res = await fetch('/.netlify/functions/claude', {
           method:'POST',
           headers:{ 'Content-Type':'application/json' },
-          body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:400, messages:[{role:'user',content:parts}] })
+          body:JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:400, messages:[{role:'user',content:parts}] })
         });
         const d = await safeJson(res);
         if (d.error) throw new Error(d.error.message);
@@ -1393,7 +1396,11 @@
       setTimeout(() => el.classList.remove('visible'), 6000);
     }
 
-    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function scrollToTop() {
+      document.getElementById('input-section').style.display = '';
+      document.getElementById('result-section').classList.remove('visible');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     function buildPrompt(name, concept) {
       const hasImages = uploadedImages.length > 0;
@@ -1466,7 +1473,7 @@ JSON만 출력.`;
       const res = await fetch('/.netlify/functions/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:3200, messages:[{role:'user',content:userContent}] })
+        body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:3200, messages:[{role:'user',content:userContent}] })
       });
       const d = await safeJson(res);
       if (d.error) throw new Error(d.error.message);
@@ -1716,6 +1723,8 @@ JSON만 출력.`;
       selectedSeason = entry.season;
       selectedModel = entry.model;
       switchTab('generate');
+      // 입력 폼 숨기고 결과만 표시
+      document.getElementById('input-section').style.display = 'none';
       renderResult(entry.productName, entry.result, true);
     }
 
