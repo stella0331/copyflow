@@ -1358,7 +1358,7 @@
         const res = await fetch('/.netlify/functions/gemini', {
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({ model:'gemini-2.5-flash-latest', contents:[{parts:[...imageParts,{text:prompt}]}], generationConfig:{temperature:0.3,maxOutputTokens:400} })
+          body:JSON.stringify({ model:'gemini-2.5-flash', contents:[{parts:[...imageParts,{text:prompt}]}], generationConfig:{temperature:0.3,maxOutputTokens:400} })
         });
         const d = await safeJson(res);
         if (d.error) throw new Error(d.error.message);
@@ -1479,7 +1479,7 @@ JSON만 출력.`;
       const res = await fetch('/.netlify/functions/gemini', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ model:'gemini-2.5-flash-latest', contents:[{parts}], generationConfig:{ temperature:0.85, maxOutputTokens:3200, responseMimeType:'application/json' } })
+        body:JSON.stringify({ model:'gemini-2.5-flash', contents:[{parts}], generationConfig:{ temperature:0.85, maxOutputTokens:3200, responseMimeType:'application/json' } })
       });
       const d = await safeJson(res);
       if (d.error) throw new Error(d.error.message);
