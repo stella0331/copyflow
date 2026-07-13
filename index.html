@@ -1609,6 +1609,9 @@ JSON만 출력.`;
       document.getElementById('tab-btn-history').classList.toggle('active', tab === 'history');
       document.getElementById('tab-generate').classList.toggle('active', tab === 'generate');
       document.getElementById('tab-history').classList.toggle('active', tab === 'history');
+      if (tab === 'generate') {
+        document.getElementById('input-section').style.display = '';
+      }
       if (tab === 'history') renderHistory();
     }
 
