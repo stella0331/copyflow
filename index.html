@@ -786,6 +786,8 @@
 
     .btn-reset:hover { border-color: var(--text); color: var(--text); }
 
+    .block-actions { display: flex; align-items: center; gap: 6px; }
+
     .btn-regenerate {
       font-size: 15px; background: var(--surface2);
       border: 1px solid var(--border); color: var(--text-muted);
@@ -992,8 +994,8 @@
             <span class="block-num">01</span>
             <span class="block-title">SEO 최적화 상품 설명</span>
           </div>
-          <button class="btn-copy" onclick="copyBlock('seo-content')">복사</button>
-          <button class="btn-regenerate" id="regen-seo" onclick="regenerate('seo')">↺ 재생성</button>
+          <div class="block-actions"><button class="btn-regenerate" id="regen-seo" onclick="regenerate('seo')">↺ 재생성</button><button class="btn-copy" onclick="copyBlock('seo-content')">복사</button></div>
+          
         </div>
         <div class="block-body">
           <div class="seo-box">
@@ -1043,8 +1045,8 @@
             <span class="block-num">04</span>
             <span class="block-title">원라인 슬로건</span>
           </div>
-          <button class="btn-copy" onclick="copyBlock('slogan-raw')">전체 복사</button>
-          <button class="btn-regenerate" id="regen-slogans" onclick="regenerate('slogans')">↺ 재생성</button>
+          <div class="block-actions"><button class="btn-regenerate" id="regen-slogans" onclick="regenerate('slogans')">↺ 재생성</button><button class="btn-copy" onclick="copyBlock('slogan-raw')">전체 복사</button></div>
+          
         </div>
         <div class="block-body">
           <!-- 감성 저격형 -->
@@ -1073,8 +1075,8 @@
             <span class="block-num">05</span>
             <span class="block-title">상세페이지 상세 설명</span>
           </div>
-          <button class="btn-copy" onclick="copyBlock('detail-raw')">전체 복사</button>
-          <button class="btn-regenerate" id="regen-detail" onclick="regenerate('detail')">↺ 재생성</button>
+          <div class="block-actions"><button class="btn-regenerate" id="regen-detail" onclick="regenerate('detail')">↺ 재생성</button><button class="btn-copy" onclick="copyBlock('detail-raw')">전체 복사</button></div>
+          
         </div>
         <div class="block-body">
 
@@ -1113,8 +1115,8 @@
             <span class="block-num">06</span>
             <span class="block-title">상품 간략설명</span>
           </div>
-          <button class="btn-copy" onclick="copyBlock('short-desc-content')">복사</button>
-          <button class="btn-regenerate" id="regen-shortdesc" onclick="regenerate('shortdesc')">↺ 재생성</button>
+          <div class="block-actions"><button class="btn-regenerate" id="regen-shortdesc" onclick="regenerate('shortdesc')">↺ 재생성</button><button class="btn-copy" onclick="copyBlock('short-desc-content')">복사</button></div>
+          
         </div>
         <div class="block-body">
           <div id="short-desc-content" style="font-size: 19px;line-height:1.9;color:var(--text);white-space:pre-wrap;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:16px;"></div>
